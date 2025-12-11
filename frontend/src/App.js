@@ -16,6 +16,7 @@ import Inventory from './pages/manager/Inventory';
 import Batches from './pages/manager/Batches';
 import Suppliers from './pages/manager/Suppliers';
 import AdminRoutes from './routes/AdminRoutes';
+import ManagerRoutes from './routes/ManagerRoutes';
 
 // Prevent Font Awesome from adding its CSS since we did it manually above
 config.autoAddCss = false;
@@ -40,8 +41,10 @@ function App() {
     }
   }, [location]);
 
-  // Check if current route is an auth page
+  // Check if current route is an auth page, admin route, or manager route
   const isAuthPage = ['/login', '/register', '/'].includes(location.pathname);
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  const isManagerRoute = location.pathname.startsWith('/manager');
 
   // Toggle sidebar
   const toggleSidebar = () => {
@@ -53,23 +56,31 @@ function App() {
       {!isAuthPage ? (
         isAuthenticated ? (
           <>
-            <Navbar 
-              toggleSidebar={toggleSidebar} 
-              isAuthenticated={isAuthenticated} 
-              setIsAuthenticated={setIsAuthenticated}
-            />
+            {!isAuthPage && !isAdminRoute && !isManagerRoute && <Navbar toggleSidebar={toggleSidebar} />}
             <div className="d-flex">
-              <Sidebar isOpen={sidebarOpen} />
-              <main className={`main-content ${!sidebarOpen ? 'expanded' : ''}`}>
+              {!isAuthPage && !isAdminRoute && !isManagerRoute && <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />}
+              <div className={`main-content ${!isAdminRoute && !isManagerRoute && sidebarOpen ? 'sidebar-open' : ''}`}>
                 <Routes>
+                  {/* Manager-specific routes */}
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/inventory" element={<Inventory />} />
                   <Route path="/inventory/:itemId/batches" element={<Batches />} />
                   <Route path="/suppliers" element={<Suppliers />} />
+                  
+                  {/* Admin routes */}
                   <Route path="/admin/*" element={<AdminRoutes />} />
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  
+                  {/* Manager routes */}
+                  <Route path="/manager/*" element={<ManagerRoutes />} />
+                  
+                  {/* Redirect any other route to dashboard based on user role */}
+                  <Route path="*" element={
+                    localStorage.getItem('isAdmin') === 'true' 
+                      ? <Navigate to="/admin/dashboard" replace /> 
+                      : <Navigate to="/dashboard" replace />
+                  } />
                 </Routes>
-              </main>
+              </div>
             </div>
           </>
         ) : (
@@ -77,7 +88,12 @@ function App() {
         )
       ) : (
         <Routes>
-          <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
+          <Route path="/" element={isAuthenticated ? 
+            (localStorage.getItem('isAdmin') === 'true' ? 
+              <Navigate to="/admin/dashboard" replace /> : 
+              <Navigate to="/dashboard" replace />) : 
+            <Home />} 
+          />
           <Route 
             path="/login" 
             element={

@@ -1,10 +1,14 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import AdminLayout from '../pages/admin/AdminLayout';
-import Dashboard from '../pages/admin/AdminDashboard';
-import StaffList from '../pages/admin/StaffList';
+import Dashboard from '../pages/admin/Dashboard';
+import StaffManagement from '../pages/admin/StaffManagement';
+import Inventory from '../pages/admin/Inventory';
+import Reports from '../pages/admin/Reports';
+import Settings from '../pages/admin/Settings';
 
 const AdminRoutes = () => {
+  const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [isAdmin, setIsAdmin] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
@@ -25,16 +29,21 @@ const AdminRoutes = () => {
 
   if (!isAuthenticated || !isAdmin) {
     // Store the intended URL before redirecting to login
-    localStorage.setItem('redirectAfterLogin', '/admin/dashboard');
-    return <Navigate to="/login" replace />;
+    const redirectPath = location.pathname + location.search;
+    localStorage.setItem('redirectAfterLogin', redirectPath);
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return (
     <Routes>
       <Route element={<AdminLayout />}>
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="staff" element={<StaffList />} />
         <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="staff" element={<StaffManagement />} />
+        <Route path="inventory" element={<Inventory />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Route>
     </Routes>
   );
